@@ -245,7 +245,109 @@ This engineering curriculum rejects generic "vibe-coding" and passive 30-hour vi
       4. Diagonal Switch Invariant: Proved the diagonal pin wiring rule on 4-pin tactile switches
          for foolproof mechanical breadboard routing.
   • Hardware Status:            100% OPERATIONAL & VERIFIED ON PHYSICAL DESK (4-Click Full Cycle)
-  • Immediate Next Milestone:   Circuit 04: Multi-Color RGB / Traffic Light Autonomous FSM
+  • Immediate Next Milestone:   Circuit 04: Multi-Color RGB / Traffic Light Autonomous FSM (COMPLETED)
+========================================================================================
+```
+
+```
+========================================================================================
+                 SHLOK // EMBEDDED ROBOTICS & HARDWARE AUDIT REPORT #04
+========================================================================================
+  • Audit Date:                 October 06, 2026
+  • Target Milestone:           Circuit 04: Autonomous Traffic Light with Pedestrian Interruption FSM
+  • Physical Architecture:      Arduino UNO (ATmega328P @ 16 MHz), MB-102 Breadboard
+  • Verified Signal Pipeline:   Green LED (Pin 10, 220Ω), Yellow LED (Pin 11, 220Ω),
+                                Red LED (Pin 12, 220Ω), Tactile Push Button (Pin 2, INPUT_PULLUP)
+                                ──► ATmega328P Non-Blocking FSM Engine
+  • Key Technical Breakthroughs:
+      1. Multi-Channel Actuator Coordination: Transitioned from isolated single-pin control to
+         a 4-phase deterministic Finite State Machine (GREEN -> YELLOW -> RED -> RED_AMBER).
+      2. The Parallel Diode Trap Elimination: Applied dedicated 220Ω current limiters per LED,
+         preventing bandgap forward-voltage clamping and semiconductor thermal runaway.
+      3. Hybrid Event & Time Schedulers: Merged deterministic non-blocking phase timing
+         (millis()) with asynchronous edge-triggered pedestrian interrupt requests.
+      4. Metrology & Common Ground Isolation: Successfully diagnosed and resolved the MB-102
+         split-rail/opposite-rail ground open circuit via continuity and resistance metrology.
+  • Hardware Status:            100% OPERATIONAL & FLASHED TO COM6 (Zero blown components)
+  • Immediate Next Milestone:   Circuit 05: Analog Sensing & Metrology (LDR / Resistor Ladder ADC Engine) (COMPLETED)
+========================================================================================
+```
+
+```
+========================================================================================
+                 SHLOK // EMBEDDED ROBOTICS & HARDWARE AUDIT REPORT #05
+========================================================================================
+  • Audit Date:                 October 07, 2026
+  • Target Milestone:           Circuit 05: Aerospace Resistor Ladder (Multi-Key ADC Engine)
+  • Physical Architecture:      Arduino UNO (ATmega328P @ 16 MHz), MB-102 Breadboard
+  • Verified Signal Pipeline:   3x Tactile Push Buttons (5V direct, 10kΩ divider, 22kΩ divider)
+                                ──► Single Common Analog Node ──► 10kΩ Ground Pull-Down
+                                ──► ATmega328P Pin A0 (10-bit Successive Approximation ADC)
+                                ──► Actuator Feedback: Pin 10 (Green), Pin 11 (Yellow), Pin 12 (Red)
+  • Key Technical Breakthroughs:
+      1. Continuous-to-Discrete Quantization: Mastered the 10-bit ADC architecture converting
+         0.00V - 5.00V continuous voltage into 1024 discrete integer states (4.887 mV/tick).
+      2. The Aerospace Single-Wire Bus: Replaced 3 discrete GPIO lines with a single analog
+         wire using Kirchhoff's Voltage Divider law (5.0V, 2.5V, and 1.56V discrete states).
+      3. Windowed Hysteresis & De-noising: Implemented windowed thresholding to eliminate analog
+         voltage bounce and environmental resistor thermal drift.
+      4. Closed-Loop Actuator Mapping: Zero-latency decoding mapping discrete physical voltages
+         to LED indicators with real-time 115200-baud serial telemetry.
+  • Immediate Next Milestone:   Project 05B: Secret Cadence Rhythm Vault Lock (COMPLETED)
+========================================================================================
+```
+
+```
+========================================================================================
+                 SHLOK // EMBEDDED ROBOTICS & NEURO-METROLOGY AUDIT REPORT #05C
+========================================================================================
+  • Audit Date:                 October 11, 2026
+  • Target Milestone:           Project 05C: F1 Grand Prix Reflex Benchmark & Neuro-Metrology
+  • Physical Architecture:      Arduino UNO (ATmega328P @ 16 MHz), MB-102 Breadboard
+  • Verified Signal Pipeline:   Tactile Push Button (Pin 2, INPUT_PULLUP to Central Ground Hub)
+                                ──► Microsecond Hardware Timestamp Engine
+                                ──► Dual Actuators: Pin 12 (Red Stage), Pin 10 (Blue Go, 220Ω)
+                                ──► 115200 Baud Real-Time Telemetry Stream
+  • Key Technical Breakthroughs:
+      1. Central Ground Hub Architecture: Solved MB-102 split-rail open-circuit fault by routing
+         all ground returns to a unified breadboard node (Row 30) connected directly to Arduino GND.
+      2. Silicon Internal Pull-Up Invariant: Eliminated external clutter resistors by activating
+         the ATmega328P's internal ~30kΩ pull-up resistor (pinMode INPUT_PULLUP).
+      3. Non-Blocking Random Temporal Scheduler: Seeded PRNG via floating ADC pin noise (Pin A5)
+         to generate un-gameable random delay intervals (2000ms - 5000ms).
+      4. Asynchronous False-Start Trapping: Implemented zero-latency edge polling during the
+         armed stage to penalize anticipation before visual stimulus.
+  • Metrology Benchmark Results:
+      • First Clean Round:      312 ms (Baseline)
+      • Second Sprint:          182 ms (Godlike / F1 World Champion)
+      • Third Sprint:           190 ms (Top Gun Pilot)
+      • Peak Reflex Velocity:   171 ms (Elite Human Neuro-Motor Latency)
+  • Hardware Status:            100% OPERATIONAL & VERIFIED ON BENCH (Zero blown components)
+  • Immediate Next Milestone:   Phase 1 Sensor Expansion / Summer Polyglot CanvasBot Roadmap
+========================================================================================
+```
+
+```
+========================================================================================
+                 SHLOK // EMBEDDED CYBER-SECURITY & ROBOTICS AUDIT REPORT #05B
+========================================================================================
+  • Audit Date:                 October 07, 2026
+  • Target Milestone:           Project 05B: Secret Cadence Rhythm Vault Lock (Time-Interval Biometrics)
+  • Physical Architecture:      Arduino UNO (ATmega328P @ 16 MHz), MB-102 Breadboard
+  • Verified Signal Pipeline:   1x Tactile Push Button (Pin 2, INPUT_PULLUP, zero external resistors)
+                                ──► Microsecond Hardware Timer Cadence Analysis
+                                ──► Dual Actuators: Pin 10 (Green Vault Unlocked), Pin 12 (Red Strobe Alarm)
+  • Key Technical Breakthroughs:
+      1. Microsecond Temporal Interval Extraction: Captured human mechanical actuation deltas
+         with zero delay() blocking using millis() hardware timer.
+      2. Human Factor Tolerance Bands: Implemented a +/-40% dynamic variance window to account
+         for natural biological human motor rhythm jitter.
+      3. Automatic Timeout Finalization: 1.2-second silence detector automatically finalizing
+         the input vector without needing a separate 'Enter' key.
+      4. Minimalist Hardware Architecture: Achieved complex temporal biometric security using
+         zero external resistors on the input switch.
+  • Hardware Status:            100% OPERATIONAL & FLASHED TO COM6
+  • Immediate Next Milestone:   Phase 1 Sensor Expansion: Acoustic & Ultrasonic Transducers
 ========================================================================================
 ```
 
