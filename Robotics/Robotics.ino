@@ -1,43 +1,75 @@
 /*
- * SHLOK // ROBOTICS & NEURO-METROLOGY
- * Project: F1 Grand Prix Reaction Timer (with Live Wiring Feedback)
- *
- * Hardware Map:
- *   - Pin 10: Green LED Anode (+) via 220Ω
- *   - Pin 12: Red LED Anode (+) via 220Ω
- *   - Pin 2 : Tactile Push Button (to GND, INPUT_PULLUP)
- *
- * Feature:
- *   - STAGE 1 (WIRING CHECK): Alternates Green and Red continuously!
- *     As soon as you plug each LED in correctly, you will see it blinking!
- *   - STAGE 2 (THE RACE): Press the button once to start the F1 reaction game!
+ * SHLOK // EMBEDDED SYSTEMS & HARDWARE INTERACTION
+ * Project: SHLOK-OS // Two-Way Interactive Serial Command Shell (CLI v1.0)
+ * 
+ * Hardware Map (Zero Rewiring - Uses Existing Circuit 05C):
+ *   - Pin 10: Blue / Green LED (Actuator 1, via 220Ω)
+ *   - Pin 12: Red LED (Actuator 2, via 220Ω)
+ *   - Pin 2 : Tactile Push Button (Sensor 1, INPUT_PULLUP)
+ *   - Pin A0: Analog Telemetry Pin
+ * 
+ * Architecture:
+ *   - Non-blocking ASCII Command Parser
+ *   - Two-Way Telemetry & Actuation Terminal (115200 Baud)
+ *   - Embedded CPU Benchmarking & Telemetry Metrics
  */
 
 #include <Arduino.h>
 
 constexpr uint8_t PIN_BUTTON   = 2;
-constexpr uint8_t PIN_LED_GREEN = 10;
-constexpr uint8_t PIN_LED_RED   = 12;
+constexpr uint8_t PIN_LED_BLUE = 10;
+constexpr uint8_t PIN_LED_RED  = 12;
 
-enum class GameState : uint8_t {
-    WIRING_TEST_BLINK, // Continuously alternates LEDs so you know wiring is good
-    ARMING,            // Red solid ON ("Get ready...")
-    WAITING_FOR_GREEN, // Random delay (2-5s) + false start check
-    TIMING_REACTION,   // Green slams ON, measuring ms
-    SHOW_RESULT        // Display score
-};
+String inputBuffer = "";
 
-GameState currentState = GameState::WIRING_TEST_BLINK;
+void printPrompt() {
+    Serial.print(F("\nSHLOK-OS> "));
+}
 
-unsigned long lastBlinkTime = 0;
-bool toggleState = false;
-unsigned long stateStartTime = 0;
-unsigned long randomWaitDuration = 0;
-unsigned long greenTurnOnTime = 0;
+void printBanner() {
+    Serial.println(F("\n=========================================================="));
+    Serial.println(F("         SHLOK-OS // HARDWARE COMMAND TERMINAL v1.0       "));
+    Serial.println(F("   Two-Way Microcontroller Shell (ATmega328P @ 16 MHz)    "));
+    Serial.println(F("=========================================================="));
+    Serial.println(F("Type 'HELP' for available hardware commands."));
+    printPrompt();
+}
 
-void evaluateScore(unsigned long reactionMs) {
-    Serial.println(F("\n---------------------------------------------------"));
-    Serial.print(F(">>> REACTION TIME: "));
+void runF1Race() {
+    Serial.println(F("\n[!] ================= F1 RACE INITIALIZED ================="));
+    Serial.println(F("[!] STAGE: RED ON. Get your finger hovering on the button!"));
+    digitalWrite(PIN_LED_BLUE, LOW);
+    digitalWrite(PIN_LED_RED, HIGH);
+
+    unsigned long waitTime = random(2000, 5000);
+    unsigned long startWait = millis();
+
+    // Check false start during random delay
+    while (millis() - startWait < waitTime) {
+        if (digitalRead(PIN_BUTTON) == LOW) {
+            Serial.println(F("[!] FALSE START! You jumped the gun! DISQUALIFIED!"));
+            for (int i = 0; i < 4; ++i) {
+                digitalWrite(PIN_LED_RED, HIGH);
+                delay(60);
+                digitalWrite(PIN_LED_RED, LOW);
+                delay(60);
+            }
+            return;
+        }
+    }
+
+    // LIGHTS OUT!
+    digitalWrite(PIN_LED_RED, LOW);
+    digitalWrite(PIN_LED_BLUE, HIGH);
+    unsigned long goTime = millis();
+    Serial.println(F("[!] LIGHTS OUT! SMASH THE BUTTON NOW!"));
+
+    while (digitalRead(PIN_BUTTON) == HIGH) {
+        // Wait for smash
+    }
+
+    unsigned long reactionMs = millis() - goTime;
+    Serial.print(F("\n>>> REACTION TIME: "));
     Serial.print(reactionMs);
     Serial.println(F(" MILLISECONDS <<<"));
 
@@ -45,25 +77,154 @@ void evaluateScore(unsigned long reactionMs) {
         Serial.println(F(">>> TIER: GODLIKE // F1 WORLD CHAMPION (VERSTAPPEN TIER)"));
     } else if (reactionMs < 230) {
         Serial.println(F(">>> TIER: TOP GUN // FIGHTER JET PILOT / ESPORTS PRO"));
-    } else if (reactionMs < 290) {
-        Serial.println(F(">>> TIER: STANDARD // AVERAGE HUMAN REACTION"));
     } else {
-        Serial.println(F(">>> TIER: BRAIN LAG // SLEEPY ZOMBIE / DRINK SOME WATER"));
+        Serial.println(F(">>> TIER: HUMAN // SOLID REACTION TIME"));
     }
-    Serial.println(F("---------------------------------------------------"));
-    Serial.println(F("Next round starting in 3 seconds...\n"));
+
+    delay(1000);
+    digitalWrite(PIN_LED_BLUE, LOW);
 }
 
-void triggerFalseStart() {
-    Serial.println(F("\n[!] FALSE START! You jumped before Green! Disqualified!"));
-    for (int i = 0; i < 5; ++i) {
-        digitalWrite(PIN_LED_RED, HIGH);
-        delay(70);
-        digitalWrite(PIN_LED_RED, LOW);
-        delay(70);
+void runCpuBenchmark() {
+    Serial.println(F("\n[BENCHMARK] Executing 100,000 integer math operations..."));
+    unsigned long startTime = micros();
+
+    volatile long sum = 0;
+    for (long i = 0; i < 100000; ++i) {
+        sum += (i * 3) / 2;
     }
-    delay(1000);
-    currentState = GameState::ARMING;
+
+    unsigned long elapsedMicros = micros() - startTime;
+    float elapsedMs = elapsedMicros / 1000.0f;
+
+    Serial.print(F("[BENCHMARK COMPLETED] Time: "));
+    Serial.print(elapsedMicros);
+    Serial.print(F(" microseconds ("));
+    Serial.print(elapsedMs, 2);
+    Serial.println(F(" ms)"));
+    Serial.print(F("[COMPUTE RATE] ~"));
+    Serial.print((100000.0f / elapsedMs) * 1000.0f, 0);
+    Serial.println(F(" ops/sec at 16 MHz silicon clock."));
+}
+
+void printSystemStatus() {
+    Serial.println(F("\n----------------- SYSTEM TELEMETRY -----------------"));
+    Serial.print(F("• Uptime:        "));
+    Serial.print(millis() / 1000);
+    Serial.println(F(" seconds"));
+
+    Serial.print(F("• Red LED (D12): "));
+    Serial.println(digitalRead(PIN_LED_RED) ? F("ACTIVE (HIGH)") : F("OFF (LOW)"));
+
+    Serial.print(F("• Blue LED (D10):"));
+    Serial.println(digitalRead(PIN_LED_BLUE) ? F("ACTIVE (HIGH)") : F("OFF (LOW)"));
+
+    Serial.print(F("• Button (D2):   "));
+    Serial.println((digitalRead(PIN_BUTTON) == LOW) ? F("PRESSED (LOW)") : F("RELEASED (HIGH)"));
+
+    Serial.print(F("• Analog A0 Raw: "));
+    Serial.print(analogRead(A0));
+    Serial.print(F(" ("));
+    Serial.print((analogRead(A0) * 5.0f) / 1023.0f, 2);
+    Serial.println(F(" Volts)"));
+    Serial.println(F("---------------------------------------------------"));
+}
+
+void processCommand(String cmd) {
+    cmd.trim();
+    cmd.toUpperCase();
+
+    if (cmd.length() == 0) {
+        printPrompt();
+        return;
+    }
+
+    Serial.println(cmd); // Echo command
+
+    if (cmd == "HELP") {
+        Serial.println(F("\nAVAILABLE HARDWARE COMMANDS:"));
+        Serial.println(F("  RED ON      - Turn Red LED ON"));
+        Serial.println(F("  RED OFF     - Turn Red LED OFF"));
+        Serial.println(F("  BLUE ON     - Turn Blue LED ON"));
+        Serial.println(F("  BLUE OFF    - Turn Blue LED OFF"));
+        Serial.println(F("  ALL ON      - Turn both LEDs ON"));
+        Serial.println(F("  ALL OFF     - Turn both LEDs OFF"));
+        Serial.println(F("  TOGGLE      - Invert current state of both LEDs"));
+        Serial.println(F("  STROBE      - Rapidly flash LEDs 5 times"));
+        Serial.println(F("  STATUS      - Print full live hardware telemetry"));
+        Serial.println(F("  BENCH       - Run ATmega328P CPU benchmark"));
+        Serial.println(F("  F1          - Trigger F1 reaction reflex test"));
+        Serial.println(F("  PING        - Latency check (returns PONG)"));
+        Serial.println(F("  CLEAR       - Clear terminal screen"));
+    } 
+    else if (cmd == "RED ON") {
+        digitalWrite(PIN_LED_RED, HIGH);
+        Serial.println(F("[ACK] Red LED activated."));
+    } 
+    else if (cmd == "RED OFF") {
+        digitalWrite(PIN_LED_RED, LOW);
+        Serial.println(F("[ACK] Red LED deactivated."));
+    } 
+    else if (cmd == "BLUE ON" || cmd == "GREEN ON") {
+        digitalWrite(PIN_LED_BLUE, HIGH);
+        Serial.println(F("[ACK] Blue LED activated."));
+    } 
+    else if (cmd == "BLUE OFF" || cmd == "GREEN OFF") {
+        digitalWrite(PIN_LED_BLUE, LOW);
+        Serial.println(F("[ACK] Blue LED deactivated."));
+    } 
+    else if (cmd == "ALL ON") {
+        digitalWrite(PIN_LED_RED, HIGH);
+        digitalWrite(PIN_LED_BLUE, HIGH);
+        Serial.println(F("[ACK] All actuators illuminated."));
+    } 
+    else if (cmd == "ALL OFF") {
+        digitalWrite(PIN_LED_RED, LOW);
+        digitalWrite(PIN_LED_BLUE, LOW);
+        Serial.println(F("[ACK] All actuators darkened."));
+    } 
+    else if (cmd == "TOGGLE") {
+        digitalWrite(PIN_LED_RED, !digitalRead(PIN_LED_RED));
+        digitalWrite(PIN_LED_BLUE, !digitalRead(PIN_LED_BLUE));
+        Serial.println(F("[ACK] Actuator states inverted."));
+    } 
+    else if (cmd == "STROBE") {
+        Serial.println(F("[ACK] Executing hardware strobe sequence..."));
+        for (int i = 0; i < 5; ++i) {
+            digitalWrite(PIN_LED_RED, HIGH);
+            digitalWrite(PIN_LED_BLUE, LOW);
+            delay(80);
+            digitalWrite(PIN_LED_RED, LOW);
+            digitalWrite(PIN_LED_BLUE, HIGH);
+            delay(80);
+        }
+        digitalWrite(PIN_LED_BLUE, LOW);
+        Serial.println(F("[ACK] Strobe completed."));
+    } 
+    else if (cmd == "STATUS") {
+        printSystemStatus();
+    } 
+    else if (cmd == "BENCH") {
+        runCpuBenchmark();
+    } 
+    else if (cmd == "F1") {
+        runF1Race();
+    } 
+    else if (cmd == "PING") {
+        Serial.println(F("PONG! [Hardware Link: OK (115200 Baud)]"));
+    } 
+    else if (cmd == "CLEAR") {
+        for (int i = 0; i < 35; ++i) Serial.println();
+        printBanner();
+        return;
+    } 
+    else {
+        Serial.print(F("[ERR] Unknown command: '"));
+        Serial.print(cmd);
+        Serial.println(F("'. Type 'HELP' for command index."));
+    }
+
+    printPrompt();
 }
 
 void setup() {
@@ -71,83 +232,30 @@ void setup() {
     while (!Serial && millis() < 2000) {}
 
     pinMode(PIN_BUTTON, INPUT_PULLUP);
-    pinMode(PIN_LED_GREEN, OUTPUT);
+    pinMode(PIN_LED_BLUE, OUTPUT);
     pinMode(PIN_LED_RED, OUTPUT);
 
-    randomSeed(analogRead(A5));
+    digitalWrite(PIN_LED_BLUE, LOW);
+    digitalWrite(PIN_LED_RED, LOW);
 
-    Serial.println(F("\n========================================================"));
-    Serial.println(F("[SYSTEM]: F1 REACTION BENCHMARK ONLINE                  "));
-    Serial.println(F("[STATUS]: WIRING CHECK MODE ACTIVE                      "));
-    Serial.println(F("Green and Red will alternate blink every 300ms.         "));
-    Serial.println(F("When your wiring is ready, PRESS THE BUTTON to start!   "));
-    Serial.println(F("========================================================"));
+    randomSeed(analogRead(A5));
+    printBanner();
 }
 
 void loop() {
-    switch (currentState) {
-        case GameState::WIRING_TEST_BLINK:
-            // Blink Green and Red alternately so user has live feedback while plugging wires!
-            if (millis() - lastBlinkTime >= 300) {
-                lastBlinkTime = millis();
-                toggleState = !toggleState;
-                digitalWrite(PIN_LED_GREEN, toggleState ? HIGH : LOW);
-                digitalWrite(PIN_LED_RED, toggleState ? LOW : HIGH);
+    while (Serial.available() > 0) {
+        char c = (char)Serial.read();
+
+        if (c == '\n' || c == '\r') {
+            if (inputBuffer.length() > 0) {
+                processCommand(inputBuffer);
+                inputBuffer = "";
             }
-
-            // Once the button is plugged in and pressed, start the game!
-            if (digitalRead(PIN_BUTTON) == LOW) {
-                delay(50); // Debounce
-                if (digitalRead(PIN_BUTTON) == LOW) {
-                    digitalWrite(PIN_LED_GREEN, LOW);
-                    digitalWrite(PIN_LED_RED, LOW);
-                    Serial.println(F("\n[+] BUTTON VERIFIED! STARTING F1 RACE IN 1 SECOND..."));
-                    delay(1000);
-                    currentState = GameState::ARMING;
-                }
+        } else {
+            // Buffer characters
+            if (inputBuffer.length() < 64) {
+                inputBuffer += c;
             }
-            break;
-
-        case GameState::ARMING:
-            digitalWrite(PIN_LED_GREEN, LOW);
-            digitalWrite(PIN_LED_RED, HIGH); // Red solid ON = "Get Ready"
-
-            Serial.println(F("[GRID ARMED] Red Light is ON. Hover finger on button..."));
-            randomWaitDuration = random(2000, 5000);
-            stateStartTime = millis();
-            currentState = GameState::WAITING_FOR_GREEN;
-            break;
-
-        case GameState::WAITING_FOR_GREEN:
-            // False Start Detection
-            if (digitalRead(PIN_BUTTON) == LOW) {
-                triggerFalseStart();
-                return;
-            }
-
-            if (millis() - stateStartTime >= randomWaitDuration) {
-                // LIGHTS OUT!
-                digitalWrite(PIN_LED_RED, LOW);
-                digitalWrite(PIN_LED_GREEN, HIGH);
-                greenTurnOnTime = millis();
-                currentState = GameState::TIMING_REACTION;
-            }
-            break;
-
-        case GameState::TIMING_REACTION:
-            if (digitalRead(PIN_BUTTON) == LOW) {
-                unsigned long reactionMs = millis() - greenTurnOnTime;
-                evaluateScore(reactionMs);
-
-                stateStartTime = millis();
-                currentState = GameState::SHOW_RESULT;
-            }
-            break;
-
-        case GameState::SHOW_RESULT:
-            if (millis() - stateStartTime >= 3000) {
-                currentState = GameState::ARMING;
-            }
-            break;
+        }
     }
 }
